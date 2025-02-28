@@ -15,14 +15,15 @@ const routes = [
     },
     {
         path: '/',
-        redirect: '/home' // 重定向到home页面
+        redirect: '/home'
     }
 ];
 
 const router = createRouter({
-    history: createWebHistory(process.env.BASE_URL),
+    history: createWebHistory(
+        process.env.NODE_ENV === 'production' ? '/OmniTrack/' : process.env.BASE_URL
+    ),
     routes
 });
-
 
 export default router;
