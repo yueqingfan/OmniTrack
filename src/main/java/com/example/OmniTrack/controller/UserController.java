@@ -28,7 +28,6 @@ public class UserController {
     public ResponseEntity<String> login(@RequestBody LoginRequest loginRequest, HttpSession session) {
         try {
             User user = userService.login(loginRequest);
-            // 用户登录成功，将用户信息存储到 session 中
             session.setAttribute("user", user);
             return ResponseEntity.ok("登录成功");
         } catch (Exception e) {
