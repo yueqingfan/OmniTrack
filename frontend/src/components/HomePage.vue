@@ -1,44 +1,87 @@
 <template>
-  <div>
-    <div v-if="!isLoggedIn">
-      <!-- 登录部分 -->
-      <div v-if="!isRegistering">
-        <h2>登录</h2>
-        <input v-model="username" placeholder="用户名" />
-        <input v-model="password" type="password" placeholder="密码" />
-        <button @click="login">登录</button>
-
-        <div v-if="loginErrorMessage">{{ loginErrorMessage }}</div>
-
-        <p>还没有账户？ <button @click="switchToRegister">注册</button></p>
+  <div class="home-container">
+    <div class="login-box">
+      <div class="text-center avatar-box">
+        <img src="../assets/logo.png" class="img-thumbnail avatar" alt="Logo">
       </div>
-
-      <!-- 注册部分 -->
-      <div v-if="isRegistering">
-        <h2>注册</h2>
-        <input v-model="newUsername" placeholder="用户名" />
-        <input v-model="newPassword" type="password" placeholder="密码" />
-        <input v-model="email" placeholder="邮箱" />
-        <button @click="register">注册</button>
-
-        <div v-if="registerErrorMessage">{{ registerErrorMessage }}</div>
-
-        <p>已有账户？ <button @click="switchToLogin">登录</button></p>
+      <div class="form-login-container">
+        <div v-if="!isRegistering" class="form-login p-4">
+          <h2 class="form-title">登录</h2>
+          <div class="form-group">
+            <label for="username">账号</label>
+            <input
+                type="text"
+                class="form-control"
+                id="username"
+                placeholder="请输入账号"
+                autocomplete="off"
+                v-model.trim="username"
+            />
+          </div>
+          <div class="form-group">
+            <label for="password">密码</label>
+            <input
+                type="password"
+                class="form-control"
+                id="password"
+                placeholder="请输入密码"
+                v-model.trim="password"
+            />
+          </div>
+          <div class="form-actions">
+            <button type="button" class="btn btn-secondary" @click="switchToRegister">注册</button>
+            <button type="button" class="btn btn-primary" @click="login">登录</button>
+          </div>
+          <div v-if="loginError" class="error-message">{{ loginError }}</div>
+        </div>
+        <div v-if="isRegistering" class="form-login p-4">
+          <h2 class="form-title">注册</h2>
+          <div class="form-group">
+            <label for="newUsername">用户名</label>
+            <input
+                type="text"
+                class="form-control"
+                id="newUsername"
+                placeholder="请输入用户名"
+                v-model.trim="newUsername"
+            />
+          </div>
+          <div class="form-group">
+            <label for="newPassword">密码</label>
+            <input
+                type="password"
+                class="form-control"
+                id="newPassword"
+                placeholder="请输入密码"
+                v-model.trim="newPassword"
+            />
+          </div>
+          <div class="form-group">
+            <label for="email">邮箱</label>
+            <input
+                type="email"
+                class="form-control"
+                id="email"
+                placeholder="请输入邮箱"
+                v-model.trim="email"
+            />
+          </div>
+          <div class="form-actions">
+            <button type="button" class="btn btn-secondary" @click="login">登录</button>
+            <button type="button" class="btn btn-primary" @click="register">注册</button>
+          </div>
+          <div v-if="registerError" class="error-message">{{ registerError }}</div>
+        </div>
       </div>
-    </div>
-
-    <!-- 主页内容 -->
-    <div v-if="isLoggedIn">
-      <h2>欢迎，{{ username }}！</h2>
-      <button @click="logout">退出</button>
     </div>
   </div>
 </template>
-
 <script>
 import axios from "axios";
-
 export default {
+  mounted() {
+    console.log("Vue 组件已加载");
+  },
   data() {
     return {
       username: "",
@@ -46,94 +89,156 @@ export default {
       newUsername: "",
       newPassword: "",
       email: "",
-      isLoggedIn: false,
-      isRegistering: false, // 控制是否显示注册表单
-      registerErrorMessage: "",
-      loginErrorMessage: "",
+      isRegistering: false,
+      loginError: "",
+      registerError: "",
     };
   },
   methods: {
-    // 登录方法
     async login() {
       try {
         const response = await axios.post("http://localhost:8080/api/users/login", {
           username: this.username,
-          password: this.password
+          password: this.password,
         });
-
         if (response.status === 200) {
-          this.isLoggedIn = true;
-          this.username = response.data.username; // 假设后端返回用户信息
-          localStorage.setItem("isLoggedIn", "true"); // 使用 localStorage 记录登录状态
           console.log("登录成功");
+          this.$router.push('/dashboard');
         } else {
-          this.loginErrorMessage = "登录失败，请检查用户名或密码";
+          console.log("响应状态非200，登录失败");
+          this.loginError = "登录失败，请检查用户名或密码";
         }
       } catch (error) {
         console.error("登录请求错误", error);
-        this.loginErrorMessage = "登录请求失败，请检查网络";
+        this.loginError = "登录请求失败，请检查网络";
       }
     },
-
-    // 注册方法
     async register() {
       try {
         const requestData = {
           username: this.newUsername,
           password: this.newPassword,
-          email: this.email
+          email: this.email,
         };
-
         const response = await axios.post("http://localhost:8080/api/users/register", requestData, {
           headers: {
             "Content-Type": "application/json",
-          }
+          },
         });
-
         if (response.status === 200) {
           console.log("注册成功", response.data);
-          this.loginErrorMessage = "注册成功，请登录！";
+          this.switchToLogin();
         } else {
-          this.registerErrorMessage = "注册失败，请重试";
+          this.registerError = "注册失败，请重试";
         }
       } catch (error) {
-        console.error("注册请求错误", error); // 详细错误
-        this.registerErrorMessage = "注册请求失败，请检查网络";
+        console.error("注册请求错误", error);
+        this.registerError = "注册请求失败，请检查网络";
       }
     },
-
-    // 切换到注册页面
     switchToRegister() {
       this.isRegistering = true;
-      this.loginErrorMessage = "";
-      this.registerErrorMessage = "";
+      this.loginError = "";
+      this.registerError = "";
     },
-
-    // 切换到登录页面
     switchToLogin() {
       this.isRegistering = false;
-      this.loginErrorMessage = "";
-      this.registerErrorMessage = "";
+      this.loginError = "";
+      this.registerError = "";
     },
-
-    // 退出方法
-    logout() {
-      this.isLoggedIn = false;
-      this.username = "";
-      localStorage.removeItem("isLoggedIn"); // 清除登录状态
-      console.log("退出成功");
-    }
   },
-  mounted() {
-    // 页面加载时检查登录状态
-    const storedLoginStatus = localStorage.getItem("isLoggedIn");
-    if (storedLoginStatus === "true") {
-      this.isLoggedIn = true; // 如果有登录状态，则自动设置为已登录
-    }
-  }
 };
 </script>
 
-<style scoped>
-/* 可以根据需要自定义样式 */
+<style lang="less" scoped>
+.home-container {
+  background-color: #35495e;
+  height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.login-box {
+  width: 400px;
+  background-color: #fff;
+  border-radius: 15px;
+  padding: 40px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+  position: relative;
+}
+.avatar-box {
+  position: absolute;
+  top: -60px;
+  left: 50%;
+  transform: translateX(-50%);
+}
+.avatar {
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  box-shadow: 0 0 8px rgba(0, 0, 0, 0.2);
+}
+.form-login-container {
+  display: flex;
+  flex-direction: column;
+}
+.form-title {
+  text-align: center;
+  margin-bottom: 20px;
+  font-size: 22px;
+}
+.form-group {
+  margin-bottom: 20px;
+}
+label {
+  font-size: 14px;
+  color: #333;
+}
+.form-control {
+  width: 100%;
+  padding: 12px;
+  border-radius: 8px;
+  border: 1px solid #ddd;
+  font-size: 16px;
+  transition: border-color 0.3s;
+}
+.form-control:focus {
+  border-color: #007bff;
+  outline: none;
+}
+.form-actions {
+  display: flex;
+  justify-content: space-between;
+}
+.btn {
+  width: 48%;
+  padding: 10px;
+  font-size: 16px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+.btn-primary {
+  background-color: #007bff;
+  color: white;
+  border: none;
+}
+.btn-primary:hover {
+  background-color: #0056b3;
+}
+.btn-secondary {
+  background-color: #6c757d;
+  color: white;
+  border: none;
+}
+.btn-secondary:hover {
+  background-color: #5a6268;
+}
+.error-message {
+  color: red;
+  margin-top: 10px;
+  font-size: 14px;
+  text-align: center;
+}
 </style>
