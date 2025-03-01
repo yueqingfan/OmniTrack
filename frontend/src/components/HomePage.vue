@@ -97,7 +97,7 @@ export default {
   methods: {
     async login() {
       try {
-        const response = await axios.post("https://9e85-2001-250-209-2000-383f-9e44-4496-d16.ngrok-free.app/api/users/login", {
+        const response = await axios.post(" http://localhost:8080/api/users/login", {
           username: this.username,
           password: this.password,
         });
@@ -120,7 +120,7 @@ export default {
           password: this.newPassword,
           email: this.email,
         };
-        const response = await axios.post("https://9e85-2001-250-209-2000-383f-9e44-4496-d16.ngrok-free.app/api/users/register", requestData, {
+        const response = await axios.post(" http://localhost:8080/api/users/register", requestData, {
           headers: {
             "Content-Type": "application/json",
           },

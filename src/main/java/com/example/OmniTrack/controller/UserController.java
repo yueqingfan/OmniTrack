@@ -34,7 +34,6 @@ public class UserController {
             return ResponseEntity.status(401).body("登录失败: " + e.getMessage());
         }
     }
-
     // 退出方法
     @PostMapping("/logout")
     public ResponseEntity<String> logout(HttpSession session) {
