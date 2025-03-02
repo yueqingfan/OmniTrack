@@ -6,7 +6,8 @@ import com.example.OmniTrack.model.UserRegistrationRequest;
 import com.example.OmniTrack.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-
+import org.springframework.http.HttpStatus;
+import org.springframework.web.server.ResponseStatusException;
 @Service
 public class UserService {
 
@@ -14,7 +15,7 @@ public class UserService {
     private UserRepository userRepository;
     public String register(UserRegistrationRequest userRequest) {
         if (userRepository.findByUsername(userRequest.getUsername()) != null) {
-            throw new RuntimeException("用户名已存在");
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "用户名已存在");
         }
         User user = new User(userRequest.getUsername(), userRequest.getPassword(), userRequest.getEmail());
         userRepository.save(user);
@@ -23,7 +24,7 @@ public class UserService {
     public User login(LoginRequest loginRequest) {
         User user = userRepository.findByUsername(loginRequest.getUsername());
         if (user == null || !user.getPassword().equals(loginRequest.getPassword())) {
-            throw new RuntimeException("用户名或密码错误");
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED,"用户名或密码错误");
         }
         return user;
     }
