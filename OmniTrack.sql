@@ -10,3 +10,10 @@ CREATE TABLE IF NOT EXISTS users(
 );
 CREATE UNIQUE INDEX idx_username ON users(username);
 CREATE UNIQUE INDEX idx_email ON users(email);
+CREATE TABLE alarm_records (
+                               id BIGINT AUTO_INCREMENT PRIMARY KEY,
+                               label VARCHAR(255),
+                               confidence DOUBLE,
+                               image_url TEXT,
+                               timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);

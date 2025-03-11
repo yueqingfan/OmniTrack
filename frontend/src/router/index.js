@@ -1,7 +1,7 @@
 import { createRouter, createWebHistory } from 'vue-router';
 import Home from '../components/HomePage.vue';
 import Dashboard from '../components/DashboardPage.vue';
-
+import AlarmRecords from "@/components/AlarmRecords.vue";
 const routes = [
     {
         path: '/home',
@@ -12,6 +12,11 @@ const routes = [
         path: '/dashboard',
         name: 'Dashboard',
         component: Dashboard
+    },
+    {
+        path:'/alarmrecords',
+        name:'AlarmRecords',
+        component: AlarmRecords
     },
     {
         path: '/',
