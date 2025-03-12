@@ -15,37 +15,44 @@ async def predict(image: UploadFile = File(...)):
     image = preprocess(image).unsqueeze(0).to(device)
 
     labels = [
-        'normal',
-        'people fighting on a street',
-        'fire on a street',
-        'street violence or rioting',
-        'serious car crash',
-        'hit-and-run incident',
-        'aggressive driving or road rage',
-        'person brandishing a weapon',
-        'armed robbery in public',
-        'sudden large crowd gathering',
-        'suspicious abandoned object',
-        'explosion on a street',
-        'violence in an office',
-        'fire breaking out in an office',
-        'gun violence in a building',
-        'hostage situation',
-        'sudden panic or evacuation',
-        'person trespassing in a restricted area',
-        'theft or unauthorized access',
-        'suspicious behavior in an office',
-        'arson attempt indoors',
-        'arrest in progress',
-        'physical assault or abuse',
-        'gun shooting incident',
-        'explosion occurring',
-        'burglary or forced entry',
-        'looting or large-scale theft',
-        'vandalism or property destruction',
-        'dangerous road accident',
-        'suspicious package left unattended',
-        'violent protest or mob activity'
+        "normal",
+
+        # 虐待 (Abuse)
+        "physical abuse in a domestic setting",
+        "child abuse incident captured on video",
+        "elder abuse in a care facility",
+        "domestic violence with visible injuries",
+
+        # 火灾 (Fire)
+        "fire"
+        "fire outbreak in a residential building",
+        "house fire with heavy smoke and flames",
+        "industrial fire emergency scene",
+        "urban fire incident with rapid spread",
+
+        # 打架 (Fighting)
+        "street fight between individuals",
+        "bar fight with aggressive physical altercation",
+        "crowd brawl with multiple participants",
+        "public fight in a busy area",
+
+        # 盗窃 (Theft)
+        "theft incident in a public area",
+        "pickpocketing event in a crowded location",
+        "burglary with forced entry at night",
+        "shoplifting captured in a retail store",
+
+        # 爆炸 (Explosion)
+        "explosion incident in an urban environment",
+        "bomb explosion with a visible shockwave",
+        "industrial explosion with debris and fire",
+        "sudden explosion in a public venue",
+
+        # 枪击 (Shooting)
+        "gun shooting incident in a crowded area",
+        "active shooter scenario with police response",
+        "mass shooting event with multiple casualties",
+        "urban shooting scene with visible gunfire"
     ]
 
     text_inputs = clip.tokenize(labels).to(device)

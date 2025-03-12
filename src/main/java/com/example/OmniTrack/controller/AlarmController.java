@@ -30,13 +30,9 @@ public class AlarmController {
                 alarmRecord.getLabel(),
                 alarmRecord.getConfidence(),
                 alarmRecord.getImageUrl() != null ? alarmRecord.getImageUrl().length() : 0);
-
-        // 检查数据是否完整
         if (alarmRecord.getLabel() == null || alarmRecord.getImageUrl() == null) {
             return ResponseEntity.badRequest().body("数据不完整");
         }
-
-        // 如果时间戳未设置，则设置为当前时间
         if (alarmRecord.getTimestamp() == null) {
             alarmRecord.setTimestamp(LocalDateTime.now());
         }
