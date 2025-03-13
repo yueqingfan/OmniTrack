@@ -28,7 +28,6 @@ public class UserController {
             return ResponseEntity.badRequest().body(Map.of("message", "注册失败: " + e.getMessage()));
         }
     }
-
     @PostMapping("/login")
     public ResponseEntity<?> login(@Valid @RequestBody LoginRequest loginRequest, HttpSession session) {
         try {
@@ -38,29 +37,5 @@ public class UserController {
         } catch (Exception e) {
             return ResponseEntity.status(401).body(Map.of("message", "登录失败: " + e.getMessage()));
         }
-    }
-
-    @PostMapping("/logout")
-    public ResponseEntity<?> logout(HttpSession session) {
-        try {
-            session.invalidate();
-            return ResponseEntity.ok().body(Map.of("message", "退出成功"));
-        } catch (Exception e) {
-            return ResponseEntity.status(500).body(Map.of("message", "退出失败: " + e.getMessage()));
-        }
-    }
-
-    @GetMapping("/checkLogin")
-    public ResponseEntity<?> checkLogin(HttpSession session) {
-        if (session.getAttribute("user") != null) {
-            return ResponseEntity.ok().body(Map.of("message", "已登录"));
-        } else {
-            return ResponseEntity.status(401).body(Map.of("message", "未登录"));
-        }
-    }
-
-    @GetMapping("/home")
-    public ResponseEntity<String> home() {
-        return ResponseEntity.ok("欢迎来到主页！");
     }
 }

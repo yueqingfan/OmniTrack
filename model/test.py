@@ -24,23 +24,32 @@ async def predict(image: UploadFile = File(...)):
         "domestic violence with visible injuries",
 
         # 火灾 (Fire)
-        "fire"
-        "fire outbreak in a residential building",
-        "house fire with heavy smoke and flames",
-        "industrial fire emergency scene",
-        "urban fire incident with rapid spread",
+        "fire spreading across building",
+        "building burning with heavy smoke",
+        "flames consuming structure",
+        "smoke billowing from burning site",
+        "house fire with active flames",
 
         # 打架 (Fighting)
-        "street fight between individuals",
-        "bar fight with aggressive physical altercation",
-        "crowd brawl with multiple participants",
-        "public fight in a busy area",
+        "violent physical confrontation",
+        "people throwing punches at each other",
+        "aggressive physical altercation between individuals",
+        "people engaged in fistfight",
+        "violent brawl with pushing and shoving",
+        "crowd fight with multiple participants",
+        "street fight with physical violence",
+        "bar fight with aggressive combat",
+        "public physical altercation",
+        "group fighting with chaotic movements",
+        "Two people are fighting",
+        "A group of people are fighting",
 
         # 盗窃 (Theft)
         "theft incident in a public area",
         "pickpocketing event in a crowded location",
         "burglary with forced entry at night",
         "shoplifting captured in a retail store",
+        "robbery confrontation with visible threat",
 
         # 爆炸 (Explosion)
         "explosion incident in an urban environment",

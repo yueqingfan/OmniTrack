@@ -50,7 +50,7 @@
                 type="text"
                 class="form-control"
                 id="newUsername"
-                placeholder="请输入用户名 (6-20个字符)"
+                placeholder="请输入用户名 (3-20个字符)"
                 v-model.trim="newUsername"
             />
             <small v-if="registerErrors.username" class="error-message">{{ registerErrors.username }}</small>
@@ -128,8 +128,8 @@ export default {
       if (!this.username) {
         this.loginErrors.username = "用户名不能为空";
         isValid = false;
-      } else if (this.username.length < 6 || this.username.length > 20) {
-        this.loginErrors.username = "用户名长度必须在6到20个字符之间";
+      } else if (this.username.length < 3 || this.username.length > 20) {
+        this.loginErrors.username = "用户名长度必须在3到20个字符之间";
         isValid = false;
       }
 
@@ -139,8 +139,15 @@ export default {
       } else if (this.password.length < 6) {
         this.loginErrors.password = "密码长度至少6个字符";
         isValid = false;
+      } else {
+        const hasUpperCase = /[A-Z]/.test(this.password);
+        const hasLowerCase = /[a-z]/.test(this.password);
+        const hasNumbers = /\d/.test(this.password);
+        if (!(hasUpperCase && hasLowerCase && hasNumbers)) {
+          this.loginErrors.password = "密码必须包含至少一个大写字母、一个小写字母、一个数字和一个特殊字符";
+          isValid = false;
+        }
       }
-
       return isValid;
     },
 
@@ -151,18 +158,43 @@ export default {
       if (!this.newUsername) {
         this.registerErrors.username = "用户名不能为空";
         isValid = false;
-      } else if (this.newUsername.length < 6 || this.newUsername.length > 20) {
-        this.registerErrors.username = "用户名长度必须在6到20个字符之间";
+      } else if (this.newUsername.length < 3 || this.newUsername.length > 20) {
+        this.registerErrors.username = "用户名长度必须在3到20个字符之间";
         isValid = false;
       }
-
       if (!this.newPassword) {
         this.registerErrors.password = "密码不能为空";
         isValid = false;
       } else if (this.newPassword.length < 6) {
         this.registerErrors.password = "密码长度至少6个字符";
         isValid = false;
+      } else {
+        const hasUpperCase = /[A-Z]/.test(this.newPassword);
+        const hasLowerCase = /[a-z]/.test(this.newPassword);
+        const hasNumbers = /\d/.test(this.newPassword);
+
+        // 调试信息
+        console.log("密码:", this.newPassword);
+        console.log("密码验证检查:", {
+          hasUpperCase: hasUpperCase,
+          hasLowerCase: hasLowerCase,
+          hasNumbers: hasNumbers,
+        });
+
+        if (!(hasUpperCase && hasLowerCase && hasNumbers)) {
+          let missingRequirements = [];
+          if (!hasUpperCase) missingRequirements.push("大写字母");
+          if (!hasLowerCase) missingRequirements.push("小写字母");
+          if (!hasNumbers) missingRequirements.push("数字");
+
+          this.registerErrors.password = `密码必须包含至少一个大写字母、一个小写字母、一个数字和一个特殊字符 (缺少: ${missingRequirements.join(", ")})`;
+          console.log("验证失败，缺少:", missingRequirements.join(", "));
+          isValid = false;
+        } else {
+          console.log("密码验证通过!");
+        }
       }
+
 
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
       if (!this.email) {
@@ -197,7 +229,6 @@ export default {
         if (error.response && error.response.data) {
           // Handle validation errors from server
           if (error.response.status === 400 && typeof error.response.data === 'object') {
-            // Map backend validation errors to form fields
             const fieldErrors = error.response.data;
             Object.keys(fieldErrors).forEach(key => {
               if (Object.prototype.hasOwnProperty.call(this.loginErrors, key)) {

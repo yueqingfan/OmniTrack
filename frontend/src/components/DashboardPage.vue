@@ -58,6 +58,7 @@
         </div>
       </aside>
       <div class="main-display">
+        <audio ref="alarmSound" src="alarm.mp3" preload="auto"></audio>
         <div class="alarm-banner" v-if="alarmOn">
           <div class="alarm-icon">⚠️</div>
           <div class="alarm-content">
@@ -83,8 +84,6 @@
     <footer class="footer">
       <p>&copy; 2025 Omnitrack 危险行为智能识别系统 🚨</p>
     </footer>
-
-    <audio ref="alarmSound" src="alarm.mp3" preload="auto"></audio>
   </div>
 </template>
 <style scoped>
@@ -512,10 +511,7 @@ export default {
 
           // 转换标签为小写方便匹配
           const labelText = dataObj.label.toLowerCase();
-          // 默认类别为 normal
           let category = "normal";
-
-          // 根据关键词将标签归类到六大异常行为中
           if (labelText.includes("abuse") ||
               labelText.includes("domestic violence") ||
               labelText.includes("child abuse") ||
@@ -543,8 +539,6 @@ export default {
               labelText.includes("gun")) {
             category = "枪击";
           }
-
-          // 更新 serverMessage 为处理后的类别及格式化后的置信度
           this.serverMessage = {
             label: category,
             confidence: confidence
@@ -565,8 +559,6 @@ export default {
         }, 3000);
       };
     },
-
-    // 打开摄像头并采集视频
     async startCamera() {
       try {
         this.videoStream = await navigator.mediaDevices.getUserMedia({ video: true });
@@ -761,8 +753,15 @@ export default {
     }
   },
   mounted() {
+    const alarmSound = this.$refs.alarmSound;
+    alarmSound.load();
+
+    alarmSound.play().then(() => {
+      alarmSound.pause();
+    }).catch((error) => {
+      console.error("音频预加载失败:", error);
+    });
     this.connectWebSocket();
-    // 尝试加载之前的报警日志（若存在）
     const storedLogs = localStorage.getItem("alarmLogs");
     if (storedLogs) {
       this.logs = JSON.parse(storedLogs);
