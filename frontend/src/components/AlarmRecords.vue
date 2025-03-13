@@ -14,7 +14,7 @@
               {{ label }}: {{ count }} 次
             </li>
           </ul>
-          <p><strong>时间范围：</strong> {{ analysisReport.startTime }} - {{ analysisReport.endTime }}</p>
+          <p><strong>时间范围：</strong> {{ analysisReport.endTime }} - {{ analysisReport.startTime }}</p>
         </div>
       </div>
       <div class="center-column">

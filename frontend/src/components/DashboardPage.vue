@@ -23,7 +23,7 @@
           <div class="upload-section" v-if="videoSource === 'local'">
             <div class="file-input-container">
               <label class="file-input-label">
-                📁 选择视频文件
+                📁选择视频
                 <input type="file" accept="video/*" @change="handleVideoUpload" class="file-input" />
               </label>
             </div>
@@ -63,9 +63,9 @@
           <div class="alarm-icon">⚠️</div>
           <div class="alarm-content">
             <h2>警报：检测到异常行为！</h2>
-            <p v-if="serverMessage" class="detection-result">
-              检测结果：<strong>{{ serverMessage.label }}</strong>
-              ({{ (serverMessage.confidence * 100).toFixed(1) }}%)
+            <p v-if="currentAlarm" class="detection-result">
+              检测结果：<strong>{{ currentAlarm.label }}</strong>
+              ({{ (currentAlarm.confidence * 100).toFixed(1) }}%)
             </p>
           </div>
           <button class="stop-alarm-btn" @click="stopAlarm">🛑 停止警报</button>
@@ -88,9 +88,8 @@
 </template>
 <style scoped>
 :root {
-  /* 定义浅灰到更浅灰的渐变色 */
-  --primary-color: #e0e0e0; /* 浅灰 */
-  --secondary-color: #f5f5f5; /* 更浅灰 */
+  --primary-color: #e0e0e0;
+  --secondary-color: #f5f5f5;
   --accent-color: #4a90e2;
   --accent-hover: #6bb8ff;
   --danger-color: #ff4d4d;
@@ -105,13 +104,11 @@ html, body {
   margin: 0;
   padding: 0;
   min-height: 100%;
-  background: #fff; /* 如果不想看到纯白背景，可改成透明等 */
+  background: #fff;
 }
-
 .container {
-  /* 浅灰渐变背景 */
   background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
-  color: #333; /* 深色字体提高对比度 */
+  color: #333;
   padding: 30px;
   border-radius: var(--border-radius);
   box-shadow: var(--box-shadow);
@@ -215,7 +212,10 @@ html, body {
   font-weight: 600;
   cursor: pointer;
   transition: all 0.3s ease;
+
+  margin-left: -20px;
 }
+
 
 .file-input-label:hover {
   background-color: var(--accent-hover);
@@ -223,7 +223,7 @@ html, body {
 }
 
 .file-input-label::before {
-  margin-right: 8px;
+  margin-right: 0px;
 }
 
 .file-input {
@@ -242,6 +242,7 @@ html, body {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  margin-right:5px;
 }
 
 .settings-panel h2 {
@@ -250,6 +251,8 @@ html, body {
   display: flex;
   align-items: center;
   gap: 8px;
+  margin-top: -20px;
+
 }
 
 .settings {
@@ -460,31 +463,39 @@ export default {
     return {
       ws: null,
       videoStream: null,
-      isCameraOn: false, // 初始状态摄像头是关闭的
+      isCameraOn: false,
       frameSending: false,
       frameCounter: 0,
       requestFrameId: null,
       serverMessage: null,
-      videoSource: "camera", // "camera" 或 "local"
+      videoSource: "camera",
       localVideoActive: false,
       currentFileName: "",
       previewImage: "",
       alarmOn: false,
       logs: [],
-      alertThreshold: 5, // 警报灵敏度（1～10）
-      detectionFrequency: 5, // 检测频率（1～10）
-      lastFrameTime: 0
+      alertThreshold: 5,
+      detectionFrequency: 5,
+      lastFrameTime: 0,
+      previousLabel: null,
+      sessionId: this.generateUniqueId(),
+      currentAlarm: null,
+      alarmCooldown: false,
+      alarmCooldownTime: 5000,
+      alarmQueue: [],
+      lastAlarmTime: 0,
+      componentKey: 0
     };
   },
   computed: {
-    // 根据检测频率计算帧间隔
     frameInterval() {
-      // 将1-10的值映射到200ms-1000ms的范围（1为最慢，10为最快）
       return Math.round(1000 / (this.detectionFrequency * 3));
     }
   },
   methods: {
-    // 建立 WebSocket 连接
+    generateUniqueId() {
+      return Date.now().toString(36) + Math.random().toString(36).substr(2);
+    },
     connectWebSocket() {
       if (this.ws) {
         this.ws.close();
@@ -517,11 +528,14 @@ export default {
               labelText.includes("child abuse") ||
               labelText.includes("elder abuse")) {
             category = "虐待";
-          } else if (labelText.includes("fire") ||
-              labelText.includes("burn") ||
-              labelText.includes("flame") ||
-              labelText.includes("smoke")) {
-            category = "火灾";
+          } else if (labelText.includes("shoot") ||
+              labelText.includes("shooting") ||
+              labelText.includes("gun") ||
+              labelText.includes("firearm") ||
+              labelText.includes("sniper") ||
+              labelText.includes("firefight") ||
+              labelText.includes("robbery")) {
+            category = "枪击";
           } else if (labelText.includes("fight") ||
               labelText.includes("brawl") ||
               labelText.includes("altercation")) {
@@ -530,15 +544,32 @@ export default {
               labelText.includes("robbery") ||
               labelText.includes("burglary") ||
               labelText.includes("shoplifting") ||
-              labelText.includes("pickpocket")) {
+              labelText.includes("pickpocket") ||
+              labelText.includes("snatching") ||
+              labelText.includes("hijacking") ||
+              labelText.includes("stealing") ||
+              labelText.includes("smash-and-grab") ||
+              labelText.includes("package theft") ||
+              labelText.includes("car theft") ||
+              labelText.includes("motorcycle theft") ||
+              labelText.includes("bicycle theft")
+          ) {
             category = "盗窃";
           } else if (labelText.includes("explosion") ||
-              labelText.includes("bomb")) {
+              labelText.includes("bomb") ||
+              labelText.includes("blast") ||
+              labelText.includes("detonation") ||
+              labelText.includes("fireball")) {
             category = "爆炸";
-          } else if (labelText.includes("shoot") ||
-              labelText.includes("gun")) {
-            category = "枪击";
+          } else if ((labelText.includes("fire") &&
+                  !labelText.includes("gunfire") &&
+                  !labelText.includes("firefight")) ||
+              labelText.includes("burn") ||
+              labelText.includes("flame") ||
+              labelText.includes("smoke")) {
+            category = "火灾";
           }
+
           this.serverMessage = {
             label: category,
             confidence: confidence
@@ -561,6 +592,9 @@ export default {
     },
     async startCamera() {
       try {
+        // 重置警报状态
+        this.resetAlarmState();
+
         this.videoStream = await navigator.mediaDevices.getUserMedia({ video: true });
         this.$refs.video.srcObject = this.videoStream;
         this.isCameraOn = true;
@@ -592,19 +626,43 @@ export default {
       }
     },
 
-    // 处理本地视频上传
     handleVideoUpload(event) {
       const file = event.target.files[0];
       if (file) {
+        // 重置状态
+        this.resetAlarmState();
+
+        // 停止当前摄像头或本地视频
         if (this.isCameraOn) {
           this.stopCamera();
         }
+
         const url = URL.createObjectURL(file);
         this.$refs.video.srcObject = null;
         this.$refs.video.src = url;
         this.localVideoActive = true;
         this.currentFileName = file.name;
-        this.startSendingFrames();
+        this.videoSource = `local:${file.name}`;
+
+        console.log("切换新视频:", file.name);
+
+        this.$refs.video.addEventListener("loadeddata", () => {
+          this.startSendingFrames();
+        });
+      }
+    },
+    resetAlarmState() {
+      this.alarmOn = false;
+      this.previousLabel = null;
+      this.currentAlarm = null;
+      this.serverMessage = null;
+      this.previewImage = "";
+      this.alarmQueue = [];
+      this.lastAlarmTime = 0;
+
+      if (this.$refs.alarmSound) {
+        this.$refs.alarmSound.pause();
+        this.$refs.alarmSound.currentTime = 0;
       }
     },
 
@@ -683,46 +741,88 @@ export default {
       ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
       return canvas.toDataURL("image/jpeg", 0.9);
     },
-
     async triggerAlarm() {
+      const now = Date.now();
+      if (this.alarmCooldown) {
+        const existingAlarm = this.alarmQueue.find(alarm => alarm.label === this.serverMessage.label);
+        if (!existingAlarm) {
+          // 将新的警报添加到队列
+          this.alarmQueue.push({
+            label: this.serverMessage.label,
+            confidence: this.serverMessage.confidence,
+            timestamp: now
+          });
+          console.log("警报冷却中，添加到队列:", this.serverMessage.label);
+        }
+        return;
+      }
+      if (this.previousLabel === this.serverMessage.label &&
+          (now - this.lastAlarmTime < this.alarmCooldownTime)) {
+        return;
+      }
       this.alarmOn = true;
-      // 播放警报声音
+      this.currentAlarm = {
+        label: this.serverMessage.label,
+        confidence: this.serverMessage.confidence
+      };
+      this.lastAlarmTime = now;
       if (this.$refs.alarmSound) {
         this.$refs.alarmSound.play().catch(e => console.error("无法播放警报声:", e));
       }
-
       const screenshot = this.captureScreenshot();
-
       try {
         const response = await axios.post("http://localhost:8080/api/alarms", {
           label: this.serverMessage.label,
           confidence: this.serverMessage.confidence,
-          imageUrl: screenshot  // 直接存 Base64
+          imageUrl: screenshot
         });
         console.log("报警数据存入数据库:", response.data);
+        this.previousLabel = this.serverMessage.label;
+        this.alarmCooldown = true;
+        setTimeout(() => {
+          this.processAlarmQueue();
+        }, this.alarmCooldownTime);
+
       } catch (error) {
         console.error("报警数据存入数据库失败:", error);
+        this.alarmCooldown = false; // 发生错误时重置冷却状态
       }
     },
+    processAlarmQueue() {
+      this.alarmCooldown = false;
 
-    // 停止警报
+      // 如果队列中有警报，处理最近的一个
+      if (this.alarmQueue.length > 0) {
+        // 按时间戳排序，获取最近的警报
+        this.alarmQueue.sort((a, b) => b.timestamp - a.timestamp);
+        const nextAlarm = this.alarmQueue.shift();
+        this.serverMessage = {
+          label: nextAlarm.label,
+          confidence: nextAlarm.confidence
+        };
+        this.alarmQueue = this.alarmQueue.filter(alarm => alarm.label !== nextAlarm.label);
+        this.triggerAlarm();
+      }
+    },
     stopAlarm() {
       this.alarmOn = false;
       if (this.$refs.alarmSound) {
         this.$refs.alarmSound.pause();
         this.$refs.alarmSound.currentTime = 0;
       }
+      this.alarmCooldown = false;
+      if (this.alarmQueue.length > 0) {
+        this.$nextTick(() => {
+          this.processAlarmQueue();
+        });
+      }
     },
-
-    // 显示通知消息
     showNotification(message, type = 'info') {
-      // 这里可以实现一个通知系统，比如使用第三方库 toast 等
       console.log(`[${type}]`, message);
-      // 如果你使用了 element-ui 或其他 UI 库，可以用它们的通知组件
     }
   },
   watch: {
-    // 当接收到检测结果时，根据 label 和 confidence 判断是否触发警报
+    // 保留现有的serverMessage监视器
     serverMessage(newVal) {
       if (newVal && newVal.label) {
         const threshold = this.alertThreshold / 10;
@@ -734,28 +834,21 @@ export default {
       }
     },
 
-    // 监听视频源变化
-    videoSource(newVal) {
-      if (newVal === "camera") {
-        // 如果切换到摄像头模式，停止本地视频
-        if (this.localVideoActive) {
-          this.$refs.video.src = "";
-          this.localVideoActive = false;
-          this.currentFileName = "";
-        }
-        // 注意：不会自动开启摄像头，需要用户手动点击开启
-      } else {
-        // 如果切换到本地视频模式，停止摄像头
-        if (this.isCameraOn) {
-          this.stopCamera();
-        }
+    watch: {
+      videoSource() {
+        this.stopSendingFrames();
+        this.ws.send("RESET");
+        this.ws.onmessage = (event) => {
+          if (event.data === "RESET_OK") {
+            this.startSendingFrames();
+          }
+        };
       }
     }
   },
   mounted() {
     const alarmSound = this.$refs.alarmSound;
     alarmSound.load();
-
     alarmSound.play().then(() => {
       alarmSound.pause();
     }).catch((error) => {
@@ -766,14 +859,25 @@ export default {
     if (storedLogs) {
       this.logs = JSON.parse(storedLogs);
     }
-
-    // 不自动开启摄像头，初始状态为关闭
+    const video = this.$refs.video;
+    if (video) {
+      video.addEventListener('ended', this.resetAlarmState);
+      video.addEventListener('error', this.resetAlarmState);
+      video.addEventListener('pause', this.resetAlarmState);
+    }
   },
   beforeUnmount() {
     if (this.ws) {
       this.ws.close();
     }
     this.stopCamera();
+
+    const video = this.$refs.video;
+    if (video) {
+      video.removeEventListener('ended', this.resetAlarmState);
+      video.removeEventListener('error', this.resetAlarmState);
+      video.removeEventListener('pause', this.resetAlarmState);
+    }
   }
 };
 </script>
