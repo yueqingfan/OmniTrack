@@ -17,17 +17,20 @@ import java.io.IOException;
 public class VideoStreamHandler extends AbstractWebSocketHandler {
 
     private static final String CLIP_API_URL = "http://127.0.0.1:8000/predict";
-
+    private volatile long lastResetTimestamp = 0;
+    private static final long RESET_COOLDOWN_MS = 1000;
     @Override
     public void afterConnectionEstablished(WebSocketSession session) throws Exception {
         System.out.println("WebSocket connection established with session id: " + session.getId());
     }
-
     @Override
     protected void handleBinaryMessage(WebSocketSession session, BinaryMessage message) throws Exception {
+        long currentTime = System.currentTimeMillis();
+        if (currentTime < lastResetTimestamp + RESET_COOLDOWN_MS) {
+            System.out.println("Frame ignored due to recent reset.");
+            return;
+        }
         System.out.println("Received binary message of size: " + message.getPayloadLength() + " bytes");
-
-        // 发送视频帧给 CLIP 进行分析
         String result = classifyFrame(message.getPayload().array());
 
         try {
@@ -36,14 +39,22 @@ public class VideoStreamHandler extends AbstractWebSocketHandler {
             e.printStackTrace();
         }
     }
-
+    @Override
+    protected void handleTextMessage(WebSocketSession session, TextMessage message) throws Exception {
+        String payload = message.getPayload();
+        if (payload.equalsIgnoreCase("RESET")) {
+            System.out.println("Received RESET command, resetting CLIP model state.");
+            lastResetTimestamp = System.currentTimeMillis();
+            session.sendMessage(new TextMessage("RESET_ACK"));
+        } else {
+            System.out.println("Received text message: " + payload);
+        }
+    }
     private String classifyFrame(byte[] frameData) {
         try {
             RestTemplate restTemplate = new RestTemplate();
-
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.MULTIPART_FORM_DATA);
-
             MultiValueMap<String, Object> body = new LinkedMultiValueMap<>();
             body.add("image", new ByteArrayResource(frameData) {
                 @Override
@@ -51,7 +62,6 @@ public class VideoStreamHandler extends AbstractWebSocketHandler {
                     return "frame.jpg";
                 }
             });
-
             HttpEntity<MultiValueMap<String, Object>> requestEntity = new HttpEntity<>(body, headers);
             ResponseEntity<String> response = restTemplate.exchange(CLIP_API_URL, HttpMethod.POST, requestEntity, String.class);
 
@@ -61,12 +71,10 @@ public class VideoStreamHandler extends AbstractWebSocketHandler {
             return "Error in CLIP classification";
         }
     }
-
     @Override
     public void afterConnectionClosed(WebSocketSession session, CloseStatus status) throws Exception {
         System.out.println("WebSocket connection closed with session id: " + session.getId());
     }
-
     @Override
     public void handleTransportError(WebSocketSession session, Throwable exception) throws Exception {
         System.out.println("Error during WebSocket communication: " + exception.getMessage());

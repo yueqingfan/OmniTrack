@@ -2,7 +2,7 @@
   <div class="home-container">
     <div class="login-box">
       <div class="text-center avatar-box">
-        <img src="../assets/logo.png" class="img-thumbnail avatar" alt="Logo">
+        <img src="../assets/logo.jpg" class="img-thumbnail avatar" alt="Logo">
       </div>
       <div class="form-login-container">
         <div v-if="!isRegistering" class="form-login p-4">
